@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>MiBalance</title>
+    <link rel="stylesheet" href="/styles.css">
+  </head>
+  <body>
+    <main class="app">
+      <section class="hero">
+        <div>
+          <p class="eyebrow">Finanzas personales</p>
+          <h1>MiBalance</h1>
+          <p>Registra ingresos, gastos e inversiones. El sistema guarda todo automaticamente en Excel.</p>
+        </div>
+        <div class="hero-card">
+          <span>Balance neto</span>
+          <strong id="netBalance">$0</strong>
+        </div>
+      </section>
+
+      <section class="grid">
+        <form id="recordForm" class="panel form-panel">
+          <h2>Nuevo movimiento</h2>
+          <label>
+            Fecha
+            <input name="date" type="date" required>
+          </label>
+          <label>
+            Descripcion
+            <input name="description" type="text" placeholder="Ej: Sueldo, supermercado" required>
+          </label>
+          <label>
+            Categoria
+            <select name="category" required>
+              <option value="income">Ingreso</option>
+              <option value="personal_expense">Gasto personal</option>
+              <option value="general_expense">Gasto general</option>
+              <option value="investment">Inversion</option>
+            </select>
+          </label>
+          <label>
+            Subcategoria
+            <input name="subcategory" type="text" placeholder="Ej: Salario, alquiler, acciones">
+          </label>
+          <label>
+            Monto
+            <input name="amount" type="number" min="0.01" step="0.01" placeholder="0.00" required>
+          </label>
+          <label>
+            Notas
+            <textarea name="notes" rows="3" placeholder="Opcional"></textarea>
+          </label>
+          <button type="submit">Guardar movimiento</button>
+          <p id="formMessage" class="message"></p>
+        </form>
+
+        <section class="panel dashboard-panel">
+          <h2>Resumen</h2>
+          <div class="stats">
+            <article><span>Ingresos</span><strong id="totalIncome">$0</strong></article>
+            <article><span>Gastos</span><strong id="totalExpenses">$0</strong></article>
+            <article><span>Inversiones</span><strong id="totalInvestments">$0</strong></article>
+            <article><span>Registros</span><strong id="recordCount">0</strong></article>
+          </div>
+
+          <h3>Comparacion mensual</h3>
+          <div id="chart" class="chart"></div>
+        </section>
+      </section>
+
+      <section class="panel">
+        <div class="table-header">
+          <h2>Movimientos</h2>
+          <span id="dataSource">Excel: MiBalance.xlsx</span>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Fecha</th>
+                <th>Descripcion</th>
+                <th>Categoria</th>
+                <th>Subcategoria</th>
+                <th>Monto</th>
+                <th>Notas</th>
+              </tr>
+            </thead>
+            <tbody id="recordsBody"></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+    <script src="/app.js"></script>
+  </body>
+</html>

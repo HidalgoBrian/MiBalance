@@ -4,7 +4,9 @@
   "main": "dist/index.js",
   "scripts": {
     "build": "tsc",
+    "check": "tsc --noEmit",
     "start": "node dist/index.js",
+    "app": "tsx src/server.ts",
     "demo": "tsx src/index.ts",
     "load": "tsx src/index.ts load",
     "template": "tsx src/index.ts template",

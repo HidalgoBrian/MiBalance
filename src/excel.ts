@@ -1,4 +1,5 @@
 import ExcelJS from 'exceljs';
+import { existsSync } from 'node:fs';
 import type { FinanceRecord, Category } from './types.js';
 
 const SHEET_NAME = 'Finanzas';
@@ -44,6 +45,8 @@ function parseExcelAmount(value: unknown): number {
 }
 
 export async function loadRecords(filePath: string): Promise<FinanceRecord[]> {
+  if (!existsSync(filePath)) return [];
+
   const workbook = new ExcelJS.Workbook();
   await workbook.xlsx.readFile(filePath);
 
@@ -112,6 +115,16 @@ export async function saveRecords(filePath: string, records: FinanceRecord[]): P
   });
 
   await workbook.xlsx.writeFile(filePath);
+}
+
+export async function addRecord(filePath: string, record: Omit<FinanceRecord, 'id'>): Promise<FinanceRecord[]> {
+  const records = await loadRecords(filePath);
+  records.push({
+    ...record,
+    id: `record-${Date.now()}`,
+  });
+  await saveRecords(filePath, records);
+  return records;
 }
 
 export async function createTemplate(filePath: string): Promise<void> {
