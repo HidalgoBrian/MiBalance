@@ -99,6 +99,18 @@ button {
 }
 
 button:hover { background: #3b3226; }
+
+.secondary-button {
+  display: none;
+  width: auto;
+  margin: 18px auto 0;
+  padding-inline: 22px;
+  background: transparent;
+  color: var(--ink);
+  border: 1px solid var(--line);
+}
+
+.secondary-button:hover { background: #fff4df; }
 .message { min-height: 20px; margin: 0; color: var(--muted); }
 .message.error { color: var(--red); }
 
@@ -124,6 +136,41 @@ button:hover { background: #3b3226; }
 .chart {
   display: grid;
   gap: 10px;
+}
+
+.year-chart {
+  display: grid;
+  gap: 12px;
+}
+
+.year-row {
+  display: grid;
+  gap: 7px;
+}
+
+.year-row header {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.year-track {
+  display: flex;
+  height: 22px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #efe4d3;
+}
+
+.year-segment {
+  min-width: 4px;
+}
+
+.year-total {
+  margin-top: 4px;
+  font-weight: 800;
 }
 
 .bar-row {
