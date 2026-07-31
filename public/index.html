@@ -52,7 +52,8 @@
             Notas
             <textarea name="notes" rows="3" placeholder="Opcional"></textarea>
           </label>
-          <button type="submit">Guardar movimiento</button>
+          <button id="submitRecord" type="submit">Guardar movimiento</button>
+          <button id="cancelEdit" class="secondary-button inline-button" type="button">Cancelar edicion</button>
           <p id="formMessage" class="message"></p>
         </form>
 
@@ -78,6 +79,31 @@
           <h2>Movimientos</h2>
           <span id="dataSource">Excel: MiBalance.xlsx</span>
         </div>
+        <div class="filters" aria-label="Filtros de movimientos">
+          <label>
+            Buscar
+            <input id="filterText" type="search" placeholder="Descripcion, subcategoria o notas">
+          </label>
+          <label>
+            Categoria
+            <select id="filterCategory">
+              <option value="">Todas</option>
+              <option value="income">Ingreso</option>
+              <option value="personal_expense">Gasto personal</option>
+              <option value="general_expense">Gasto general</option>
+              <option value="investment">Inversion</option>
+            </select>
+          </label>
+          <label>
+            Desde
+            <input id="filterFrom" type="date">
+          </label>
+          <label>
+            Hasta
+            <input id="filterTo" type="date">
+          </label>
+          <button id="clearFilters" class="secondary-button inline-button" type="button">Limpiar</button>
+        </div>
         <div class="table-wrap">
           <table>
             <thead>
@@ -88,6 +114,7 @@
                 <th>Subcategoria</th>
                 <th>Monto</th>
                 <th>Notas</th>
+                <th>Acciones</th>
               </tr>
             </thead>
             <tbody id="recordsBody"></tbody>

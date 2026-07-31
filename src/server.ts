@@ -1,7 +1,7 @@
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
 import { readFile } from 'node:fs/promises';
 import { extname, join } from 'node:path';
-import { addRecord, loadRecords } from './excel.js';
+import { addRecord, deleteRecord, loadRecords, updateRecord } from './excel.js';
 import { calculateSummary, getCategoryBreakdown } from './finance.js';
 import { getMonthlyComparisons } from './reports.js';
 import type { Category } from './types.js';
@@ -57,6 +57,46 @@ function toApiResponse(records: Awaited<ReturnType<typeof loadRecords>>) {
   };
 }
 
+async function parseRecordPayload(req: IncomingMessage): Promise<{
+  date: Date;
+  description: string;
+  category: Category;
+  subcategory: string;
+  amount: number;
+  notes: string;
+} | { error: string }> {
+  const body = JSON.parse(await readBody(req)) as Record<string, unknown>;
+  const category = String(body.category ?? '') as Category;
+  const amount = Number(body.amount);
+  const date = new Date(String(body.date ?? ''));
+
+  if (Number.isNaN(date.getTime())) {
+    return { error: 'La fecha no es valida.' };
+  }
+
+  if (!validCategories.has(category)) {
+    return { error: 'La categoria no es valida.' };
+  }
+
+  if (!Number.isFinite(amount) || amount <= 0) {
+    return { error: 'El monto debe ser mayor a cero.' };
+  }
+
+  const description = String(body.description ?? '').trim();
+  if (!description) {
+    return { error: 'La descripcion es obligatoria.' };
+  }
+
+  return {
+    date,
+    description,
+    category,
+    subcategory: String(body.subcategory ?? '').trim(),
+    amount,
+    notes: String(body.notes ?? '').trim(),
+  };
+}
+
 async function handleApi(req: IncomingMessage, res: ServerResponse): Promise<void> {
   if (req.method === 'GET' && req.url === '/api/records') {
     const records = await loadRecords(DATA_FILE);
@@ -65,42 +105,46 @@ async function handleApi(req: IncomingMessage, res: ServerResponse): Promise<voi
   }
 
   if (req.method === 'POST' && req.url === '/api/records') {
-    const body = JSON.parse(await readBody(req)) as Record<string, unknown>;
-    const category = String(body.category ?? '') as Category;
-    const amount = Number(body.amount);
-    const date = new Date(String(body.date ?? ''));
-
-    if (Number.isNaN(date.getTime())) {
-      sendJson(res, 400, { error: 'La fecha no es valida.' });
+    const payload = await parseRecordPayload(req);
+    if ('error' in payload) {
+      sendJson(res, 400, { error: payload.error });
       return;
     }
 
-    if (!validCategories.has(category)) {
-      sendJson(res, 400, { error: 'La categoria no es valida.' });
-      return;
-    }
-
-    if (!Number.isFinite(amount) || amount <= 0) {
-      sendJson(res, 400, { error: 'El monto debe ser mayor a cero.' });
-      return;
-    }
-
-    const description = String(body.description ?? '').trim();
-    if (!description) {
-      sendJson(res, 400, { error: 'La descripcion es obligatoria.' });
-      return;
-    }
-
-    const records = await addRecord(DATA_FILE, {
-      date,
-      description,
-      category,
-      subcategory: String(body.subcategory ?? '').trim(),
-      amount,
-      notes: String(body.notes ?? '').trim(),
-    });
+    const records = await addRecord(DATA_FILE, payload);
 
     sendJson(res, 201, toApiResponse(records));
+    return;
+  }
+
+  if (req.method === 'PUT' && req.url?.startsWith('/api/records/')) {
+    const id = decodeURIComponent(req.url.replace('/api/records/', '').split('?')[0] ?? '');
+    if (!id) {
+      sendJson(res, 400, { error: 'Falta el identificador del movimiento.' });
+      return;
+    }
+
+    const payload = await parseRecordPayload(req);
+    if ('error' in payload) {
+      sendJson(res, 400, { error: payload.error });
+      return;
+    }
+
+    const records = await updateRecord(DATA_FILE, id, payload);
+    sendJson(res, 200, toApiResponse(records));
+    return;
+  }
+
+  if (req.method === 'DELETE' && req.url?.startsWith('/api/records/')) {
+    const id = decodeURIComponent(req.url.replace('/api/records/', '').split('?')[0] ?? '');
+
+    if (!id) {
+      sendJson(res, 400, { error: 'Falta el identificador del movimiento.' });
+      return;
+    }
+
+    const records = await deleteRecord(DATA_FILE, id);
+    sendJson(res, 200, toApiResponse(records));
     return;
   }
 

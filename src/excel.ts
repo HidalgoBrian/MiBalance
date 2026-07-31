@@ -124,7 +124,36 @@ export async function addRecord(filePath: string, record: Omit<FinanceRecord, 'i
     id: `record-${Date.now()}`,
   });
   await saveRecords(filePath, records);
-  return records;
+  return loadRecords(filePath);
+}
+
+export async function deleteRecord(filePath: string, id: string): Promise<FinanceRecord[]> {
+  const records = await loadRecords(filePath);
+  const remaining = records.filter(record => record.id !== id);
+
+  if (remaining.length === records.length) {
+    throw new Error('No se encontro el movimiento para eliminar.');
+  }
+
+  await saveRecords(filePath, remaining);
+  return loadRecords(filePath);
+}
+
+export async function updateRecord(filePath: string, id: string, updates: Omit<FinanceRecord, 'id'>): Promise<FinanceRecord[]> {
+  const records = await loadRecords(filePath);
+  const index = records.findIndex(record => record.id === id);
+
+  if (index === -1) {
+    throw new Error('No se encontro el movimiento para editar.');
+  }
+
+  records[index] = {
+    ...updates,
+    id,
+  };
+
+  await saveRecords(filePath, records);
+  return loadRecords(filePath);
 }
 
 export async function createTemplate(filePath: string): Promise<void> {

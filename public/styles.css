@@ -111,6 +111,34 @@ button:hover { background: #3b3226; }
 }
 
 .secondary-button:hover { background: #fff4df; }
+
+.danger-button {
+  width: auto;
+  margin: 0;
+  padding: 8px 11px;
+  border: 1px solid #e2b5ad;
+  background: #fff4f2;
+  color: var(--red);
+  font-weight: 800;
+}
+
+.danger-button:hover { background: #ffe5e0; }
+
+.edit-button {
+  width: auto;
+  margin: 0 8px 0 0;
+  padding: 8px 11px;
+  border: 1px solid #b8cbe4;
+  background: #f1f7ff;
+  color: var(--blue);
+  font-weight: 800;
+}
+
+.edit-button:hover { background: #e4f0ff; }
+
+.actions-cell {
+  white-space: nowrap;
+}
 .message { min-height: 20px; margin: 0; color: var(--muted); }
 .message.error { color: var(--red); }
 
@@ -202,6 +230,20 @@ button:hover { background: #3b3226; }
   align-items: center;
 }
 
+.filters {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) repeat(3, minmax(150px, 190px)) auto;
+  gap: 12px;
+  align-items: end;
+  margin: 4px 0 18px;
+}
+
+.inline-button {
+  display: block;
+  margin: 0;
+  white-space: nowrap;
+}
+
 .table-wrap { overflow-x: auto; }
 table { width: 100%; border-collapse: collapse; min-width: 760px; }
 th, td { padding: 13px 10px; border-bottom: 1px solid var(--line); text-align: left; }
@@ -211,6 +253,7 @@ td.amount { font-weight: 800; }
 @media (max-width: 860px) {
   .hero, .grid { grid-template-columns: 1fr; }
   .stats { grid-template-columns: repeat(2, minmax(120px, 1fr)); }
+  .filters { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 @media (max-width: 520px) {
@@ -218,4 +261,5 @@ td.amount { font-weight: 800; }
   .panel, .hero-card { padding: 18px; border-radius: 20px; }
   .stats { grid-template-columns: 1fr; }
   .table-header { display: block; }
+  .filters { grid-template-columns: 1fr; }
 }

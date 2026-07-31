@@ -3,11 +3,20 @@ const formMessage = document.querySelector('#formMessage');
 const recordsBody = document.querySelector('#recordsBody');
 const chart = document.querySelector('#chart');
 const yearChart = document.querySelector('#yearChart');
+const submitRecord = document.querySelector('#submitRecord');
+const cancelEdit = document.querySelector('#cancelEdit');
 const showMoreRecords = document.querySelector('#showMoreRecords');
+const filterText = document.querySelector('#filterText');
+const filterCategory = document.querySelector('#filterCategory');
+const filterFrom = document.querySelector('#filterFrom');
+const filterTo = document.querySelector('#filterTo');
+const clearFilters = document.querySelector('#clearFilters');
 
 const recordsPageSize = 20;
 let visibleRecords = recordsPageSize;
 let currentRecords = [];
+let allRecords = [];
+let editingRecordId = null;
 
 const categoryLabels = {
   income: 'Ingreso',
@@ -30,6 +39,49 @@ function formatMoney(value) {
   return currency.format(value || 0);
 }
 
+function getFilteredRecords() {
+  const text = filterText.value.trim().toLowerCase();
+  const category = filterCategory.value;
+  const from = filterFrom.value;
+  const to = filterTo.value;
+
+  return allRecords.filter(record => {
+    const matchesText = !text || [record.description, record.subcategory, record.notes]
+      .some(value => String(value || '').toLowerCase().includes(text));
+    const matchesCategory = !category || record.category === category;
+    const matchesFrom = !from || record.date >= from;
+    const matchesTo = !to || record.date <= to;
+
+    return matchesText && matchesCategory && matchesFrom && matchesTo;
+  });
+}
+
+function refreshFilteredRecords(resetPage = true) {
+  if (resetPage) visibleRecords = recordsPageSize;
+  renderRecords(getFilteredRecords());
+}
+
+function clearEditMode() {
+  editingRecordId = null;
+  submitRecord.textContent = 'Guardar movimiento';
+  cancelEdit.style.display = 'none';
+}
+
+function enterEditMode(record) {
+  editingRecordId = record.id;
+  form.elements.date.value = record.date;
+  form.elements.description.value = record.description;
+  form.elements.category.value = record.category;
+  form.elements.subcategory.value = record.subcategory;
+  form.elements.amount.value = record.amount;
+  form.elements.notes.value = record.notes;
+  submitRecord.textContent = 'Actualizar movimiento';
+  cancelEdit.style.display = 'block';
+  formMessage.textContent = `Editando: ${record.description}`;
+  formMessage.classList.remove('error');
+  form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
 function renderStats(summary) {
   document.querySelector('#netBalance').textContent = formatMoney(summary.netBalance);
   document.querySelector('#totalIncome').textContent = formatMoney(summary.totalIncome);
@@ -44,7 +96,7 @@ function renderRecords(records) {
   recordsBody.innerHTML = '';
 
   if (currentRecords.length === 0) {
-    recordsBody.innerHTML = '<tr><td colspan="6">Todavia no hay movimientos cargados.</td></tr>';
+    recordsBody.innerHTML = '<tr><td colspan="7">No hay movimientos para los filtros seleccionados.</td></tr>';
     showMoreRecords.style.display = 'none';
     return;
   }
@@ -58,6 +110,10 @@ function renderRecords(records) {
       <td>${record.subcategory || '-'}</td>
       <td class="amount">${formatMoney(record.amount)}</td>
       <td>${record.notes || '-'}</td>
+      <td class="actions-cell">
+        <button class="edit-button" type="button" data-edit-id="${record.id}">Editar</button>
+        <button class="danger-button" type="button" data-delete-id="${record.id}">Eliminar</button>
+      </td>
     `;
     recordsBody.append(row);
   }
@@ -139,8 +195,9 @@ function renderYearChart(records) {
 }
 
 function render(data) {
+  allRecords = data.records;
   renderStats(data.summary);
-  renderRecords(data.records);
+  refreshFilteredRecords(false);
   renderChart(data.monthlyComparisons);
   renderYearChart(data.records);
 }
@@ -158,9 +215,11 @@ form.addEventListener('submit', async event => {
 
   const formData = new FormData(form);
   const payload = Object.fromEntries(formData.entries());
+  const url = editingRecordId ? `/api/records/${encodeURIComponent(editingRecordId)}` : '/api/records';
+  const method = editingRecordId ? 'PUT' : 'POST';
 
-  const response = await fetch('/api/records', {
-    method: 'POST',
+  const response = await fetch(url, {
+    method,
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
   });
@@ -176,8 +235,54 @@ form.addEventListener('submit', async event => {
   form.reset();
   setToday();
   visibleRecords = recordsPageSize;
-  formMessage.textContent = 'Movimiento guardado en Excel.';
+  formMessage.textContent = editingRecordId ? 'Movimiento actualizado en Excel.' : 'Movimiento guardado en Excel.';
+  clearEditMode();
   render(data);
+});
+
+recordsBody.addEventListener('click', async event => {
+  const editButton = event.target.closest('[data-edit-id]');
+  if (editButton) {
+    const record = allRecords.find(item => item.id === editButton.dataset.editId);
+    if (record) enterEditMode(record);
+    return;
+  }
+
+  const button = event.target.closest('[data-delete-id]');
+  if (!button) return;
+
+  const description = button.closest('tr')?.children[1]?.textContent ?? 'este movimiento';
+  const confirmed = confirm(`Eliminar ${description}? Esta accion tambien actualiza el Excel.`);
+  if (!confirmed) return;
+
+  const response = await fetch(`/api/records/${encodeURIComponent(button.dataset.deleteId)}`, {
+    method: 'DELETE',
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    formMessage.textContent = data.error ?? 'No se pudo eliminar el movimiento.';
+    formMessage.classList.add('error');
+    return;
+  }
+
+  formMessage.textContent = 'Movimiento eliminado del Excel.';
+  formMessage.classList.remove('error');
+  if (editingRecordId === button.dataset.deleteId) {
+    form.reset();
+    setToday();
+    clearEditMode();
+  }
+  render(data);
+});
+
+cancelEdit.addEventListener('click', () => {
+  form.reset();
+  setToday();
+  clearEditMode();
+  formMessage.textContent = 'Edicion cancelada.';
+  formMessage.classList.remove('error');
 });
 
 showMoreRecords.addEventListener('click', () => {
@@ -185,7 +290,20 @@ showMoreRecords.addEventListener('click', () => {
   renderRecords(currentRecords);
 });
 
+[filterText, filterCategory, filterFrom, filterTo].forEach(input => {
+  input.addEventListener('input', () => refreshFilteredRecords());
+});
+
+clearFilters.addEventListener('click', () => {
+  filterText.value = '';
+  filterCategory.value = '';
+  filterFrom.value = '';
+  filterTo.value = '';
+  refreshFilteredRecords();
+});
+
 setToday();
+clearEditMode();
 loadData().catch(error => {
   formMessage.textContent = error.message;
   formMessage.classList.add('error');
