@@ -25,13 +25,13 @@
   },
   "homepage": "https://github.com/HidalgoBrian/MiBalance#readme",
   "description": "Visualizador de finanzas personales desde Excel",
-  "devDependencies": {
-    "ts-node": "^10.9.2",
-    "tsx": "^4.23.1",
-    "typescript": "^7.0.2"
-  },
   "dependencies": {
     "exceljs": "^4.4.0",
-    "@types/node": "^26.1.2"
+    "@types/node": "^26.1.2",
+    "typescript": "^7.0.2"
+  },
+  "devDependencies": {
+    "ts-node": "^10.9.2",
+    "tsx": "^4.23.1"
   }
 }
